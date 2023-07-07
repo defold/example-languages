@@ -1,0 +1,19 @@
+function init(self)
+
+	local original = "Hello Zig friends!"
+	local encoded = encoder.encode(original)
+	local decoded = decoder.decode(encoded)
+
+	local n = gui.get_node("text1")
+	gui.set_text(n, original)
+	n = gui.get_node("text2")
+	gui.set_text(n, encoded)
+	n = gui.get_node("text3")
+	gui.set_text(n, decoded)
+end
+
+function update(self, dt)
+	-- Add update code here
+	-- Learn more: https://defold.com/manuals/script/
+	-- Remove this function if not needed
+end
