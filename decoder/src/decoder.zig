@@ -2,7 +2,7 @@ const std = @import("std");
 const print = std.debug.print;
 
 const c = @cImport({
-    @cInclude("lua/lauxlib.h");
+    @cInclude("dmsdk/lua/lauxlib.h");
     @cInclude("dmsdk/extension/extension.h");
 });
 
