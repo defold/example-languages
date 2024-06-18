@@ -1,8 +1,9 @@
 function init(self)
 
-	local original = "Hello Zig friends!"
+	local original = "Hello C# friends!"
 	local encoded = encoder.encode(original)
-	local decoded = decoder.decode(encoded)
+
+	local decoded = decoder_cs.decode(encoded)
 
 	local n = gui.get_node("text1")
 	gui.set_text(n, original)
