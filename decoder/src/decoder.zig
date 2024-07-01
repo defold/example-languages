@@ -6,7 +6,7 @@ const c = @cImport({
     @cInclude("dmsdk/extension/extension.h");
 });
 
-var g_ExtensionDesc: ?*c.dmExtensionDesc = null;
+var g_ExtensionDesc: [256]u8 = undefined;
 
 fn Decode(L: ?*c.lua_State) callconv(.C) i32 {
     var msglen: usize = 0;
@@ -31,25 +31,24 @@ fn RegisterModule(L: ?*c.lua_State) void {
     c.lua_pop(L, 1);
 }
 
-fn Initialize(params: ?*c.dmExtensionParams) callconv(.C) c_int {
+fn Initialize(params: ?*c.ExtensionParams) callconv(.C) c_int {
     const L: ?*c.lua_State = params.?.m_L;
     RegisterModule(L);
-    return c.DM_EXTENSION_RESULT_OK;
+    return c.EXTENSION_RESULT_OK;
 }
 
-fn Finalize(params: ?*c.dmExtensionParams) callconv(.C) c_int {
+fn Finalize(params: ?*c.ExtensionParams) callconv(.C) c_int {
     _ = params; // unused
-    return c.DM_EXTENSION_RESULT_OK;
+    return c.EXTENSION_RESULT_OK;
 }
 
-fn Update(params: ?*c.dmExtensionParams) callconv(.C) c_int {
+fn Update(params: ?*c.ExtensionParams) callconv(.C) c_int {
     _ = params; // unused
-    return c.DM_EXTENSION_RESULT_OK;
+    return c.EXTENSION_RESULT_OK;
 }
 
+// The "ExtensionZIG" in ext.manifest, makes the engine call this function upon starting the engine
 export fn ExtensionZIG() callconv(.C) void {
-    g_ExtensionDesc = std.heap.c_allocator.create(c.dmExtensionDesc) catch null;
-    c.dmExtensionRegister(g_ExtensionDesc, @bitSizeOf(c.dmExtensionDesc), "ExtensionZIG", null, null, Initialize, Finalize, Update, null);
+    //@memset(&g_ExtensionDesc, 0);
+    c.ExtensionRegister(@ptrCast(&g_ExtensionDesc), g_ExtensionDesc.len, "ExtensionZIG", null, null, Initialize, Finalize, Update, null);
 }
-
-export const mod_init_func_ptr linksection("__DATA,__mod_init_func") = &ExtensionZIG; // note the & op
