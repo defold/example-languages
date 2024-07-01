@@ -11,18 +11,6 @@ public unsafe class CS
 {
     static public string EXTENSION_NAME = "my_cs_extension";
 
-    // public class CSExtensionContext
-    // {
-    //     public int update;
-
-    //     public CSExtensionContext() {
-    //         Console.WriteLine("CSExtensionContext Constructor!");
-    //         update = -1;
-    //     }
-    // }
-
-    // static private CSExtensionContext? g_Ctx = null;
-
     private static int CsLuaAdd(Lua.State* L)
     {
         Console.WriteLine("    CS: CsLuaAdd");
@@ -48,7 +36,6 @@ public unsafe class CS
 
     static private int CSExtensionAppInitialize(ref Extension.AppParams parameters)
     {
-        Console.WriteLine(String.Format("    CS: Extension App Initialize:"));
         if (parameters.ConfigFile != null)
         {
             Console.WriteLine(String.Format("    CS: ConfigFile ptr: {0}", (IntPtr)parameters.ConfigFile));
@@ -127,27 +114,11 @@ public unsafe class CS
                             finalize,
                             update,
                             on_event);
-
-//         CS.g_Ctx = new CSExtensionContext();
-
-// #pragma warning disable CS8500 // Just testing that it works
-//         fixed (CSExtensionContext* ptr = &CS.g_Ctx)
-//         {
-//             Console.WriteLine(String.Format("    CS: Register Extension Internal! ptr: {0}", (IntPtr)ptr));
-
-//             Console.WriteLine(String.Format("    CS: Register Extension Internal! ctx*: update {0}", ptr->update));
-
-//             // ref CSExtensionContext ctx = ref System.Runtime.CompilerServices.Unsafe.AsRef<CSExtensionContext>(ptr);
-
-//             // Console.WriteLine(String.Format("    CS: Register Extension Internal! ref ctx: update {0}", ctx.update));
-//         }
-// #pragma warning restore CS8500
-
     }
 
     [UnmanagedCallersOnly(EntryPoint = "ExtensionCSharp")]
     public static void ExtensionCSharp()
-    {
+    {sdf
         CsRegisterExtensionInternal();
     }
 }
