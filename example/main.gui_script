@@ -1,15 +1,49 @@
-function init(self)
+function get_encoder(self, name)
+	encoder = self.encoders[name]
+	if not encoder then
+		encoder = encoder_cpp -- fallback to C++ encoder
+	end
+	return encoder
+end
 
-	local original = "Hello Zig friends!"
-	local encoded = encoder.encode(original)
-	local decoded = decoder.decode(encoded)
+function update_encoders(self, message)
+	encoder = get_encoder(self, self.encoder)
+	decoder = get_encoder(self, self.decoder)
+
+	local encoded = encoder.rot13(message)
+	local decoded = decoder.rot13(encoded)
 
 	local n = gui.get_node("text1")
-	gui.set_text(n, original)
+	gui.set_text(n, message)
+
+	n = gui.get_node("label2")
+	gui.set_text(n, "Encoded (" .. self.encoder .. ")")
 	n = gui.get_node("text2")
 	gui.set_text(n, encoded)
+
+	n = gui.get_node("label3")
+	gui.set_text(n, "Decoded (" .. self.decoder .. ")")
 	n = gui.get_node("text3")
 	gui.set_text(n, decoded)
+
+end
+
+function init(self)
+
+	self.encoders = {}
+	if encoder_cpp then
+		self.encoders['C++'] = encoder_cpp
+	end
+
+	if encoder_zig then
+		self.encoders['Zig'] = encoder_zig
+	end
+
+	self.message = "Hello Defold friends!"
+	self.encoder = 'C++'
+	self.decoder = 'Zig'
+
+	update_encoders(self, self.message)
 end
 
 function update(self, dt)

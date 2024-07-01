@@ -8,26 +8,38 @@ const c = @cImport({
 
 var g_ExtensionDesc: [256]u8 = undefined;
 
-fn Decode(L: ?*c.lua_State) callconv(.C) i32 {
+fn rot13_char(ch: u8) u8 {
+    return switch (ch) {
+        'a'...'m', 'A'...'M' => |_ch| _ch + 13,
+        'n'...'z', 'N'...'Z' => |_ch| _ch - 13,
+        else => |_ch| _ch,
+    };
+}
+
+fn Rot13(L: ?*c.lua_State) callconv(.C) i32 {
     var msglen: usize = 0;
     var msg: [*c]const u8 = c.luaL_checklstring(L, 1, &msglen);
 
+    //const rotated = rot13(msg, msglen);
     const t: []u8 = std.heap.c_allocator.alloc(u8, msglen) catch "";
     std.mem.copy(u8, t, msg[0..msglen]);
 
     var i: usize = 0;
-    while (i < msglen) : (i += 1) {
-        t[i] -= 1;
+    while (i < t.len) : (i += 1) {
+        t[i] = rot13_char(msg[i]);
     }
 
     c.lua_pushstring(L, t.ptr);
     return 1;
 }
 
-const Module_methods = [_]c.luaL_Reg{ .{ .name = "decode", .func = &Decode }, .{ .name = 0, .func = null } };
+const Module_methods = [_]c.luaL_Reg{
+    .{ .name = "rot13", .func = &Rot13 },
+    .{ .name = 0, .func = null }
+};
 
 fn RegisterModule(L: ?*c.lua_State) void {
-    c.luaL_register(L, "decoder", &Module_methods[0]);
+    c.luaL_register(L, "encoder_zig", &Module_methods[0]);
     c.lua_pop(L, 1);
 }
 
@@ -49,6 +61,6 @@ fn Update(params: ?*c.ExtensionParams) callconv(.C) c_int {
 
 // The "ExtensionZIG" in ext.manifest, makes the engine call this function upon starting the engine
 export fn ExtensionZIG() callconv(.C) void {
-    //@memset(&g_ExtensionDesc, 0);
-    c.ExtensionRegister(@ptrCast(&g_ExtensionDesc), g_ExtensionDesc.len, "ExtensionZIG", null, null, Initialize, Finalize, Update, null);
+    c.ExtensionRegister(@ptrCast(&g_ExtensionDesc), g_ExtensionDesc.len, "ExtensionZIG",
+                        null, null, Initialize, Finalize, Update, null);
 }
