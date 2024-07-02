@@ -9,8 +9,13 @@ width = 960
 height = 640
 
 [project]
-title = example-zig
+title = example-languages
 
 [library]
 include_dirs = myextension
+
+[test]
+string = hello
+int = 1976
+float = 42.0
 
