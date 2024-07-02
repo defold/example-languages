@@ -7,74 +7,76 @@ using dmSDK.Lua;
 
 // naming conventions: https://stackoverflow.com/a/1618325/468516
 
-public unsafe class CS
+public unsafe partial class CS
 {
-    static public string EXTENSION_NAME = "my_cs_extension";
+    private static ConfigFile.Config* g_ConfigFile = null;
 
-    private static int CsLuaAdd(Lua.State* L)
+    // From Rosetta: https://rosettacode.org/wiki/Rot-13#C#
+    private static char shift(char c) {
+        return c.ToString().ToLower().First() switch {
+            >= 'a' and <= 'm' => (char)(c + 13),
+            >= 'n' and <= 'z' => (char)(c - 13),
+            var _ => c
+        };
+    }
+
+    private static int Rot13(Lua.State* L)
     {
-        Console.WriteLine("    CS: CsLuaAdd");
-        int a = LuaL.checkinteger(L, 1);
-        int b = LuaL.checkinteger(L, 2);
-        Lua.pushinteger(L, a + b);
+        String s = LuaL.checkstring(L, 1);
+        String encoded = new string(s.Select(c => shift(c)).ToArray());
+        Lua.pushstring(L, encoded);
         return 1;
     }
 
-    private static int CsLuaDecode(Lua.State* L)
+    private static int GetInfo(Lua.State* L)
     {
-        String s = LuaL.checkstring(L, 1);
+        Lua.newtable(L);
 
-        char[] buffer = s.ToCharArray();
-        for (int i = 0; i < buffer.Length; ++i)
+        string s = ConfigFile.GetString(g_ConfigFile, "test.string", null);
+        if (s != null)
         {
-            buffer[i] = (char)(buffer[i] - 1);
+            Lua.pushstring(L, s);
+            Lua.setfield(L, -2, "s");
         }
-
-        Lua.pushstring(L, new String(buffer));
+        int i = ConfigFile.GetInt(g_ConfigFile, "test.int", -1);
+        if (i != -1)
+        {
+            Lua.pushinteger(L, i);
+            Lua.setfield(L, -2, "i");
+        }
+        float f = ConfigFile.GetFloat(g_ConfigFile, "test.float", -1);
+        if (f != -1)
+        {
+            Lua.pushnumber(L, f);
+            Lua.setfield(L, -2, "f");
+        }
         return 1;
     }
 
     static private int CSExtensionAppInitialize(ref Extension.AppParams parameters)
     {
-        if (parameters.ConfigFile != null)
-        {
-            Console.WriteLine(String.Format("    CS: ConfigFile ptr: {0}", (IntPtr)parameters.ConfigFile));
-
-            string str = ConfigFile.GetString(parameters.ConfigFile, "test.string", "default");
-            Console.WriteLine(String.Format("    CS: Extension App Initialize! {0} = {1}", "test.string", str));
-
-            int i = ConfigFile.GetInt(parameters.ConfigFile, "test.int", -1);
-            Console.WriteLine(String.Format("    CS: Extension App Initialize! {0} = {1}", "test.int", i));
-
-            float f = ConfigFile.GetFloat(parameters.ConfigFile, "test.float", -1);
-            Console.WriteLine(String.Format("    CS: Extension App Initialize! {0} = {1}", "test.float", f));
-        }
-
-        Console.WriteLine(String.Format("    CS: Extension App Initialize done!"));
+        g_ConfigFile = parameters.ConfigFile;
         return 0; // TODO: Return dmsdk ExtensionResult enum
     }
 
     static private int CSExtensionAppFinalize(ref Extension.AppParams parameters)
     {
-        Console.WriteLine(String.Format("    CS: Extension App Finalize!"));
         return 0;
     }
 
     static private int CSExtensionInitialize(ref Extension.Params parameters)
     {
-        Console.WriteLine(String.Format("    CS: Extension Initialize!"));
-
         // Register a new Lua module
         LuaL.RegHelper[] functions = {
-            new() {name = "add", func = Extension.GetFunctionPointer(CsLuaAdd)},
-            new() {name = "decode", func = Extension.GetFunctionPointer(CsLuaDecode)},
+            new() {name = "rot13", func = Extension.GetFunctionPointer(Rot13)},
+            new() {name = "get_info", func = Extension.GetFunctionPointer(GetInfo)},
             new() {name = null, func = 0}
         };
 
-        LuaL.Register(parameters.L, "decoder_cs", functions);
+        LuaL.Register(parameters.L, "encoder_cs", functions);
         Lua.pop(parameters.L, 1);
 
-        Console.WriteLine("Registered decoder_cs extension");
+        Console.WriteLine("Registered ExtensionCSharp");
         return 0;
     }
 
@@ -95,8 +97,6 @@ public unsafe class CS
 
     private static void CsRegisterExtensionInternal()
     {
-        Console.WriteLine("CsRegisterExtensionInternal!");
-
         IntPtr app_initialize = Extension.GetFunctionPointer(CSExtensionAppInitialize);
         IntPtr app_finalize = Extension.GetFunctionPointer(CSExtensionAppFinalize);;
         IntPtr initialize = Extension.GetFunctionPointer(CSExtensionInitialize);;
@@ -107,7 +107,7 @@ public unsafe class CS
         g_ExtensionBlob = GCHandle.Alloc(new byte[256], GCHandleType.Pinned);
 
         Extension.Register((void*)g_ExtensionBlob.AddrOfPinnedObject(), 256,
-                            EXTENSION_NAME,
+                            "ExtensionCSharp",
                             app_initialize,
                             app_finalize,
                             initialize,
@@ -118,7 +118,7 @@ public unsafe class CS
 
     [UnmanagedCallersOnly(EntryPoint = "ExtensionCSharp")]
     public static void ExtensionCSharp()
-    {sdf
+    {
         CsRegisterExtensionInternal();
     }
 }

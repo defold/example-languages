@@ -1,5 +1,9 @@
 // include the Defold SDK
 #include <dmsdk/sdk.h>
+#include <dmsdk/dlib/configfile.h>
+#include <assert.h>
+
+static HConfigFile g_ConfigFile = 0;
 
 static int isupper(char c)
 {
@@ -23,14 +27,6 @@ static char* rot13(const char* input, size_t len, char* out)
             c = upper[c - 65];
         else if (islower(c))
             c = lower[c - 97];
-
-        // if ((input[i] > 64 && input[i] < 91) || (input[i] > 96 && input[i] < 123))
-        // {
-        //     input[i] = (input[i] - 65 > 25) ? lower[input[i] - 97] : upper[input[i] - 65];
-        // }
-        // else {
-        //     out[i] = input[i];
-        // }
         out[i] = c;
     }
     return out;
@@ -48,6 +44,39 @@ static int Rot13(lua_State* L)
     char* str = strdup(original);
     lua_pushstring(L, rot13(original, len, str));
     free((void*)str);
+
+    assert((top + 1) == lua_gettop(L));
+    return 1; // Return 1 item
+}
+
+static int GetInfo(lua_State* L)
+{
+    int top = lua_gettop(L);
+
+    lua_newtable(L);
+
+    const char* s = ConfigFileGetString(g_ConfigFile, "test.string", 0);
+    if (s != 0)
+    {
+        lua_pushstring(L, s);
+        lua_setfield(L, -2, "s");
+    }
+
+    float f = ConfigFileGetFloat(g_ConfigFile, "test.float", -1);
+    if (f != -1)
+    {
+        lua_pushnumber(L, f);
+        lua_setfield(L, -2, "f");
+    }
+
+    int i = ConfigFileGetInt(g_ConfigFile, "test.int", -1);
+    if (i != -1)
+    {
+        lua_pushinteger(L, i);
+        lua_setfield(L, -2, "i");
+    }
+
+    assert((top + 1) == lua_gettop(L));
     return 1; // Return 1 item
 }
 
@@ -55,6 +84,7 @@ static int Rot13(lua_State* L)
 static const luaL_reg Module_methods[] =
 {
     {"rot13", Rot13},
+    {"get_info", GetInfo},
     {0, 0}
 };
 
@@ -71,6 +101,7 @@ static void LuaInit(lua_State* L)
 
 static dmExtension::Result AppInitializeMyExtension(dmExtension::AppParams* params)
 {
+    g_ConfigFile = params->m_ConfigFile;
     return dmExtension::RESULT_OK;
 }
 
@@ -78,6 +109,7 @@ static dmExtension::Result InitializeMyExtension(dmExtension::Params* params)
 {
     // Init Lua
     LuaInit(params->m_L);
+    printf("Registered ExtensionCPP\n");
     return dmExtension::RESULT_OK;
 }
 

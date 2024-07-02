@@ -1,36 +1,48 @@
+local encoder_lua = require('encoder_lua/encoder')
+
 function get_encoder(self, name)
-	encoder = self.encoders[name]
+	local encoder = self.encoders[name]
 	if not encoder then
 		return encoder_cpp, 'C++' -- fallback to C++ encoder
 	end
 	return encoder, name
 end
 
-function update_encoders(self, message)
-	encoder, encoder_name = get_encoder(self, self.encoder)
-	decoder, decoder_name = get_encoder(self, self.decoder)
+function update_text(self, encoder_name, message)
+	local encoder, encoder_name = get_encoder(self, encoder_name)
 
-	local encoded = encoder.rot13(message)
-	local decoded = decoder.rot13(encoded)
+	if not encoder then
+		return
+	end
 
-	local n = gui.get_node("text1")
-	gui.set_text(n, message)
+	n = gui.get_node("lbl" .. encoder_name)
+	gui.set_text(n, encoder_name .. ":")
 
-	n = gui.get_node("label2")
-	gui.set_text(n, "Encoded (" .. encoder_name .. ")")
-	n = gui.get_node("text2")
-	gui.set_text(n, encoded)
-
-	n = gui.get_node("label3")
-	gui.set_text(n, "Decoded (" .. decoder_name .. ")")
-	n = gui.get_node("text3")
+	local decoded = encoder.rot13(message)
+	if not decoded then
+		decoded = '-- decoding failed --'
+	end
+	n = gui.get_node("txt" .. encoder_name)
 	gui.set_text(n, decoded)
+
+	n = gui.get_node("txtCfg" .. encoder_name)
+	local status, info = pcall(encoder.get_info)
+	if status then
+		gui.set_text(n, json.encode(info))
+	else
+		gui.set_text(n, '-- reading config failed --')
+	end
 
 end
 
 function init(self)
 
 	self.encoders = {}
+
+	if encoder_lua then
+		self.encoders['Lua'] = encoder_lua
+	end
+
 	if encoder_cpp then
 		self.encoders['C++'] = encoder_cpp
 	end
@@ -43,11 +55,15 @@ function init(self)
 		self.encoders['C#'] = encoder_cs
 	end
 
-	self.message = "Hello Defold friends!"
-	self.encoder = 'C++'
-	self.decoder = 'C#'
+	local message = "Hello Defold friends!"
+	local encoded = encoder_cpp.rot13(message)
+	local n = gui.get_node("txtEncoded")
+	gui.set_text(n, encoded)
 
-	update_encoders(self, self.message)
+	update_text(self, 'Lua', encoded)
+	update_text(self, 'C++', encoded)
+	update_text(self, 'Zig', encoded)
+	update_text(self, 'C#', encoded)
 end
 
 function update(self, dt)
