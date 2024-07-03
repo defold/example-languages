@@ -93,7 +93,7 @@ fn Update(params: ?*c.ExtensionParams) callconv(.C) c_int {
     return c.EXTENSION_RESULT_OK;
 }
 
-// The "ExtensionZIG" in ext.manifest, makes the engine call this function upon starting the engine
+// The `name: "ExtensionZig"` in ext.manifest, makes the engine call this function upon starting the engine
 export fn ExtensionZig() callconv(.C) void {
     c.ExtensionRegister(@ptrCast(&g_ExtensionDesc), g_ExtensionDesc.len, "ExtensionZig",
                         null, null, Initialize, Finalize, Update, null);
