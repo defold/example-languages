@@ -1,25 +1,12 @@
-![zig-logo](./assets/zig-logo-320.png)
+This example project shows how to write [native extensions](https://defold.com/manuals/extensions/) using C++, C# and Zig.
 
-# Zig plugin in Defold
-
-## DISCLAIMER!
-
-This support is experimental!
-
-* The current state of the Zig toolchain is not stable, and may be updated at any time.
-* The C api support in the Defold SDK is also experimental.
-
-## Useful links
-
-* [Zig language](https://ziglang.org)
-* [Zig Documentation](https://ziglang.org/documentation/master/)
-* [Downloads](https://ziglang.org/download/)
-
-
-## How to
-
-This extension uses an experimental C api for Defold (the dmSDK).
-
-Current headers with C api:
-
-* [<dmsdk/extension/extension.h>]()
+* C++
+  * Stable
+* [Zig](https://ziglang.org)
+  * Experimental support
+  * The current state of the Zig toolchain is not stable, and may be updated at any time.
+  * Used an experimental [C API for Defold](https://github.com/defold/defold/blob/dev/engine/extension/src/dmsdk/extension/extension.h)
+* C#
+  * Experimental support
+  * Based on DotNet 9 with AOT compilation
+  * Generated from an experimental [C API for Defold](https://github.com/defold/defold/blob/dev/engine/extension/src/dmsdk/extension/extension.h)
