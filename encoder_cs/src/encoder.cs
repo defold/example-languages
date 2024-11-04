@@ -11,6 +11,8 @@ public unsafe partial class CS
 {
     private static ConfigFile.Config* g_ConfigFile = null;
 
+    // ***************************************************************************
+
     // From Rosetta: https://rosettacode.org/wiki/Rot-13#C#
     private static char shift(char c) {
         return c.ToString().ToLower().First() switch {
@@ -20,6 +22,7 @@ public unsafe partial class CS
         };
     }
 
+    [UnmanagedCallersOnly]
     private static int Rot13(Lua.State* L)
     {
         String s = LuaL.checkstring(L, 1);
@@ -28,6 +31,17 @@ public unsafe partial class CS
         return 1;
     }
 
+    [UnmanagedCallersOnly]
+    private static int TestGC(Lua.State* L)
+    {
+        Console.WriteLine("Calling System.GC.Collect()");
+        System.GC.Collect();
+        return 0;
+    }
+
+    // ***************************************************************************
+
+    [UnmanagedCallersOnly]
     private static int GetInfo(Lua.State* L)
     {
         Lua.newtable(L);
@@ -53,41 +67,48 @@ public unsafe partial class CS
         return 1;
     }
 
-    static private int CSExtensionAppInitialize(ref Extension.AppParams parameters)
+    [UnmanagedCallersOnly]
+    static private int CSExtensionAppInitialize(Extension.AppParams* parameters)
     {
-        g_ConfigFile = parameters.ConfigFile;
+        g_ConfigFile = parameters->ConfigFile;
         return 0; // TODO: Return dmsdk ExtensionResult enum
     }
 
-    static private int CSExtensionAppFinalize(ref Extension.AppParams parameters)
+    [UnmanagedCallersOnly]
+    static private int CSExtensionAppFinalize(Extension.AppParams* parameters)
     {
         return 0;
     }
 
-    static private int CSExtensionInitialize(ref Extension.Params parameters)
+    [UnmanagedCallersOnly]
+    static private int CSExtensionInitialize(Extension.Params* parameters)
     {
         // Register a new Lua module
         LuaL.RegHelper[] functions = {
-            new() {name = "rot13", func = Extension.GetFunctionPointer(Rot13)},
-            new() {name = "get_info", func = Extension.GetFunctionPointer(GetInfo)},
+            new() {name = "rot13", func = (IntPtr)(delegate* unmanaged<Lua.State*,int>)&Rot13},
+            new() {name = "get_info", func = (IntPtr)(delegate* unmanaged<Lua.State*,int>)&GetInfo},
+            new() {name = "test_gc", func = (IntPtr)(delegate* unmanaged<Lua.State*,int>)&TestGC},
             new() {name = null, func = 0}
         };
 
-        LuaL.Register(parameters.L, "encoder_cs", functions);
-        Lua.pop(parameters.L, 1);
+        LuaL.Register(parameters->L, "encoder_cs", functions);
+        Lua.pop(parameters->L, 1);
 
         Console.WriteLine("Registered ExtensionCSharp");
         return 0;
     }
 
-    static private int CSExtensionFinalize(ref Extension.Params parameters)
+    [UnmanagedCallersOnly]
+    static private int CSExtensionFinalize(Extension.Params* parameters)
     {
         Console.WriteLine(String.Format("    CS: Extension Finalize!"));
         return 0;
     }
 
-    static private int CSExtensionUpdate(ref Extension.Params updateParams)
+    [UnmanagedCallersOnly]
+    static private int CSExtensionUpdate(Extension.Params* updateParams)
     {
+        System.GC.Collect();
         return 0;
     }
 
@@ -97,12 +118,22 @@ public unsafe partial class CS
 
     private static void CsRegisterExtensionInternal()
     {
-        IntPtr app_initialize = Extension.GetFunctionPointer(CSExtensionAppInitialize);
-        IntPtr app_finalize = Extension.GetFunctionPointer(CSExtensionAppFinalize);;
-        IntPtr initialize = Extension.GetFunctionPointer(CSExtensionInitialize);;
-        IntPtr finalize = Extension.GetFunctionPointer(CSExtensionFinalize);;
-        IntPtr update = Extension.GetFunctionPointer(CSExtensionUpdate);;
-        IntPtr on_event = 0;//Extension.GetFunctionPointer(CSExtensionOnEvent);;
+        Console.WriteLine("Register internal");
+
+        String s = new String("Hello");
+        Console.WriteLine(s);
+        s = null;
+
+        Console.WriteLine("Calling System.GC.Collect()");
+        System.GC.Collect();
+
+
+        IntPtr app_initialize = (IntPtr)(delegate* unmanaged<Extension.AppParams*,int>)&CSExtensionAppInitialize;
+        IntPtr app_finalize = (IntPtr)(delegate* unmanaged<Extension.AppParams*,int>)&CSExtensionAppFinalize;
+        IntPtr initialize = (IntPtr)(delegate* unmanaged<Extension.Params*,int>)&CSExtensionInitialize;
+        IntPtr finalize = (IntPtr)(delegate* unmanaged<Extension.Params*,int>)&CSExtensionFinalize;
+        IntPtr update = (IntPtr)(delegate* unmanaged<Extension.Params*,int>)&CSExtensionUpdate;
+        IntPtr on_event = 0;//(IntPtr)(delegate* unmanaged<Extension.Params*,void>)&CSExtensionOnEvent;
 
         g_ExtensionBlob = GCHandle.Alloc(new byte[256], GCHandleType.Pinned);
 

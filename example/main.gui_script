@@ -3,10 +3,55 @@ local encoder_lua = require('encoder_lua/encoder')
 function get_encoder(self, name)
 	local encoder = self.encoders[name]
 	if not encoder then
-		return encoder_cpp, 'C++' -- fallback to C++ encoder
+		return encoder_cpp, 'Lua' -- fallback to Lua encoder
 	end
 	return encoder, name
 end
+
+-- ***********************************************************************************
+-- Performance tests
+
+function map_feature_name(name)
+	if name == 'zig' then
+		return 'Zig'
+	end
+	if name == 'cpp' then
+		return 'C++'
+	end
+	if name == 'csharp' then
+		return 'C#'
+	end
+	if name == 'vanilla' then
+		return 'Lua'
+	end
+	return nil
+end
+
+local function perf_test_init(self)
+	self.feature = sys.get_config_string('test.feature', 'unknown')
+	self.loopcount = sys.get_config_int('test.loopcount', 0)
+	print("Starting performance test of feature.", self.feature, "Loop count", self.loopcount)
+	self.start_time = socket.gettime()
+end
+
+local function perf_test_exit(self)
+	self.end_time = socket.gettime()
+	local t = self.end_time - self.start_time
+	print("Performance test of feature", self.feature, "in", t, "seconds. Decoded", self.sum, "characters in ", self.loopcount, "iterations")
+end
+
+local function perf_test_execute(self)
+	local decoder_name = map_feature_name(self.feature)
+	local decoder, _ = get_encoder(self, decoder_name)
+	self.sum = 0
+	for i=1,self.loopcount do
+		local s = decoder.rot13("Hello world!")
+		self.sum = self.sum + #s
+	end
+	self.end_time = socket.gettime()
+end
+
+-- ***********************************************************************************
 
 function update_text(self, encoder_name, message)
 	local encoder, encoder_name = get_encoder(self, encoder_name)
@@ -39,24 +84,31 @@ function init(self)
 
 	self.encoders = {}
 
+	local encoder = nil
 	if encoder_lua then
 		self.encoders['Lua'] = encoder_lua
+		encoder = encoder and encoder or self.encoders['Lua']
 	end
 
 	if encoder_cpp then
 		self.encoders['C++'] = encoder_cpp
+		encoder = encoder and encoder or self.encoders['C++']
 	end
 
 	if encoder_zig then
 		self.encoders['Zig'] = encoder_zig
+		encoder = encoder and encoder or self.encoders['Zig']
 	end
 
 	if encoder_cs then
+		encoder_cs.test_gc()
+
 		self.encoders['C#'] = encoder_cs
+		encoder = encoder and encoder or self.encoders['C#']
 	end
 
 	local message = "Hello Defold friends!"
-	local encoded = encoder_cpp.rot13(message)
+	local encoded = encoder.rot13(message)
 	local n = gui.get_node("txtEncoded")
 	gui.set_text(n, encoded)
 
@@ -64,10 +116,17 @@ function init(self)
 	update_text(self, 'C++', encoded)
 	update_text(self, 'Zig', encoded)
 	update_text(self, 'C#', encoded)
+
+	self.perftest = sys.get_config_int('test.perf_test', 0)
+	if self.perftest > 0 then
+		perf_test_init(self)
+	end
 end
 
 function update(self, dt)
-	-- Add update code here
-	-- Learn more: https://defold.com/manuals/script/
-	-- Remove this function if not needed
+	if self.perftest > 0 then
+		self.perftest = 0
+		perf_test_execute(self)
+		perf_test_exit(self)
+	end
 end
