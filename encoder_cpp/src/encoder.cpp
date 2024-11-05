@@ -46,9 +46,20 @@ static int Rot13(lua_State* L)
     // Check and get parameter string from stack
     size_t len;
     const char* original = (const char*)luaL_checklstring(L, 1, &len);
-    char* str = strdup(original);
-    lua_pushstring(L, rot13(original, len, str));
-    free((void*)str);
+    char* mem = 0;
+    char* out = 0;
+    if (len > 1024)
+    {
+        mem = out = (char*)malloc(len+1);
+    }
+    else
+    {
+        out = (char*)alloca(len+1);
+    }
+
+    out[len] = 0;
+    lua_pushstring(L, rot13(original, len, out));
+    free(mem);
 
     assert((top + 1) == lua_gettop(L));
 
