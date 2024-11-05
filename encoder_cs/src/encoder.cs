@@ -13,20 +13,25 @@ public unsafe partial class CS
 
     // ***************************************************************************
 
-    // From Rosetta: https://rosettacode.org/wiki/Rot-13#C#
+    // From https://x.com/Meetem4
     private static char shift(char c) {
-        return c.ToString().ToLower().First() switch {
+        return char.ToLower(c) switch {
             >= 'a' and <= 'm' => (char)(c + 13),
             >= 'n' and <= 'z' => (char)(c - 13),
             var _ => c
         };
     }
 
+    // From https://x.com/Meetem4
     [UnmanagedCallersOnly]
     private static int Rot13(Lua.State* L)
     {
         String s = LuaL.checkstring(L, 1);
-        String encoded = new string(s.Select(c => shift(c)).ToArray());
+        var newStringChars = new char[s.Length];
+        for (int i = 0; i < s.Length; i++)
+            newStringChars[i] = shift(s[i]);
+
+        String encoded = new string(newStringChars);
         Lua.pushstring(L, encoded);
         return 1;
     }
