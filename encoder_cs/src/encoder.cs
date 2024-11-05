@@ -27,7 +27,7 @@ public unsafe partial class CS
     private static int Rot13(Lua.State* L)
     {
         String s = LuaL.checkstring(L, 1);
-        var newStringChars = new char[s.Length];
+        Span<char> newStringChars = stackalloc char[s.Length];
         for (int i = 0; i < s.Length; i++)
             newStringChars[i] = shift(s[i]);
 
