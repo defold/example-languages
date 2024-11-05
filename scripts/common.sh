@@ -79,7 +79,6 @@ function gen_settings {
     echo "app_manifest=${APP_MANIFEST}" >> ${SETTINGS}
 
     echo "[test]" >> ${SETTINGS}
-    echo "feature=${feature}" >> ${SETTINGS}
     echo "perf_test=1" >> ${SETTINGS}
     echo "loopcount=${LOOPCOUNT}" >> ${SETTINGS}
     echo "Wrote ${SETTINGS}"

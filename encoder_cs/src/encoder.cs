@@ -37,6 +37,15 @@ public unsafe partial class CS
     }
 
     [UnmanagedCallersOnly]
+    private static int Add(Lua.State* L)
+    {
+        double a = LuaL.checknumber(L, 1);
+        double b = LuaL.checknumber(L, 2);
+        Lua.pushnumber(L, a + b);
+        return 1;
+    }
+
+    [UnmanagedCallersOnly]
     private static int TestGC(Lua.State* L)
     {
         Console.WriteLine("Calling System.GC.Collect()");
@@ -91,6 +100,7 @@ public unsafe partial class CS
         // Register a new Lua module
         LuaL.RegHelper[] functions = {
             new() {name = "rot13", func = (IntPtr)(delegate* unmanaged<Lua.State*,int>)&Rot13},
+            new() {name = "add", func = (IntPtr)(delegate* unmanaged<Lua.State*,int>)&Add},
             new() {name = "get_info", func = (IntPtr)(delegate* unmanaged<Lua.State*,int>)&GetInfo},
             new() {name = "test_gc", func = (IntPtr)(delegate* unmanaged<Lua.State*,int>)&TestGC},
             new() {name = null, func = 0}
@@ -124,14 +134,6 @@ public unsafe partial class CS
     private static void CsRegisterExtensionInternal()
     {
         Console.WriteLine("Register internal");
-
-        String s = new String("Hello");
-        Console.WriteLine(s);
-        s = null;
-
-        Console.WriteLine("Calling System.GC.Collect()");
-        System.GC.Collect();
-
 
         IntPtr app_initialize = (IntPtr)(delegate* unmanaged<Extension.AppParams*,int>)&CSExtensionAppInitialize;
         IntPtr app_finalize = (IntPtr)(delegate* unmanaged<Extension.AppParams*,int>)&CSExtensionAppFinalize;

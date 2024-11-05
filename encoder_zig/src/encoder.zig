@@ -34,6 +34,13 @@ fn Rot13(L: ?*c.lua_State) callconv(.C) i32 {
     return 1;
 }
 
+fn Add(L: ?*c.lua_State) callconv(.C) i32 {
+    var a: f64 = c.luaL_checknumber(L, 1);
+    var b: f64 = c.luaL_checknumber(L, 2);
+    c.lua_pushnumber(L, a + b);
+    return 1;
+}
+
 fn GetInfo(L: ?*c.lua_State) callconv(.C) i32 {
 
     c.lua_newtable(L);
@@ -64,6 +71,7 @@ fn GetInfo(L: ?*c.lua_State) callconv(.C) i32 {
 
 const Module_methods = [_]c.luaL_Reg{
     .{ .name = "rot13", .func = &Rot13 },
+    .{ .name = "add", .func = &Add },
     .{ .name = "get_info", .func = &GetInfo },
     .{ .name = 0, .func = null }
 };

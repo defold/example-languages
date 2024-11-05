@@ -15,4 +15,8 @@ function M.get_info()
     return t
 end
 
+function M.add(a, b)
+    return a + b
+end
+
 return M

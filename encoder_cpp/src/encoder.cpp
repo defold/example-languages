@@ -1,39 +1,44 @@
 // include the Defold SDK
 #include <dmsdk/sdk.h>
 #include <dmsdk/dlib/configfile.h>
+#include <dmsdk/dlib/time.h>
 #include <assert.h>
 
 static HConfigFile g_ConfigFile = 0;
 
-static int isupper(char c)
+static inline char tolower(char c)
 {
-    return (c >= 65 && c <= 90); // 65='A', 90='Z'
+    return c | 32; // adds
 }
 
-static int islower(char c)
+static char shift(char c)
 {
-    return (c >= 97 && c <= 122); // 97='a', 122='z'
+    // Make sure it's lower case
+    char l = tolower(c);
+    if (l >= 'a' && l <= 'm') return c + 13;
+    if (l >= 'n' && l <= 'z') return c - 13;
+    return c;
 }
 
 static char* rot13(const char* input, size_t len, char* out)
 {
-    const char upper[] = "NOPQRSTUVWXYZABCDEFGHIJKLM"; // 65='A', 90='Z'
-    const char lower[] = "nopqrstuvwxyzabcdefghijklm"; // 97='a', 122='z'
-
     for (size_t i = 0; i < len; ++i)
     {
-        char c = input[i];
-        if (isupper(c))
-            c = upper[c - 65];
-        else if (islower(c))
-            c = lower[c - 97];
-        out[i] = c;
+        out[i] = shift(input[i]);
     }
     return out;
 }
 
+static int g_CountRot13 = 0;
+static int g_CountAdd = 0;
+static uint64_t g_TimeRot13 = 0;
+static uint64_t g_TimeAdd = 0;
+
 static int Rot13(lua_State* L)
 {
+    // ++g_CountRot13;
+    // uint64_t t_start = dmTime::GetTime();
+
     // The number of expected items to be on the Lua stack
     // once this struct goes out of scope
     int top = lua_gettop(L);
@@ -46,6 +51,26 @@ static int Rot13(lua_State* L)
     free((void*)str);
 
     assert((top + 1) == lua_gettop(L));
+
+    // uint64_t t_end = dmTime::GetTime();
+    // g_TimeRot13 += t_end - t_start;
+    return 1; // Return 1 item
+}
+
+static int Add(lua_State* L)
+{
+    // ++g_CountAdd;
+    // uint64_t t_start = dmTime::GetTime();
+
+    int top = lua_gettop(L);
+    double a = luaL_checknumber(L, 1);
+    double b = luaL_checknumber(L, 2);
+    lua_pushnumber(L, a + b);
+
+    assert((top + 1) == lua_gettop(L));
+
+    // uint64_t t_end = dmTime::GetTime();
+    // g_TimeAdd += t_end - t_start;
     return 1; // Return 1 item
 }
 
@@ -84,6 +109,7 @@ static int GetInfo(lua_State* L)
 static const luaL_reg Module_methods[] =
 {
     {"rot13", Rot13},
+    {"add", Add},
     {"get_info", GetInfo},
     {0, 0}
 };
@@ -115,6 +141,8 @@ static dmExtension::Result InitializeMyExtension(dmExtension::Params* params)
 
 static dmExtension::Result AppFinalizeMyExtension(dmExtension::AppParams* params)
 {
+    // printf("MAWE: g_CountRot13: %d in %g s\n", g_CountRot13, g_TimeRot13 / 1000000.0 );
+    // printf("MAWE: g_CountAdd: %d in %g s\n", g_CountAdd, g_TimeAdd / 1000000.0);
     return dmExtension::RESULT_OK;
 }
 
