@@ -1,10 +1,12 @@
 local M = {}
 
 -- from Rosetta: https://rosettacode.org/wiki/Rot-13#Lua
+
+local a = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+local b = "NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm"
+local string = string
 function M.rot13(s)
-    local a = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-    local b = "NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm"
-    return (s:gsub("%a", function(c) return b:sub(a:find(c)) end))
+    return string.gsub(s, "%a", function(c) return string.sub(b, string.find(a, c)) end)
 end
 
 function M.get_info()
