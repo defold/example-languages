@@ -1,7 +1,7 @@
 #!/sr/bin/env bash
 
 if [ -z "${DYNAMO_HOME}" ]; then
-    echo "No DYNAMO_HOME found. Settiong it to '.'"
+    echo "No DYNAMO_HOME found. Setting it to '.'"
     DYNAMO_HOME=.
 fi
 
@@ -10,7 +10,7 @@ if [ -z "${BOB}" ]; then
 fi
 
 if [ -z "${SERVER}" ]; then
-    SERVER=http://build.defold.com
+    SERVER=https://build.defold.com
 fi
 
 if [ -z "${LOOPCOUNT}" ]; then
