@@ -25,7 +25,7 @@ if [ -z "${PLATFORM}" ]; then
 fi
 
 if [ -z "${VARIANT}" ]; then
-    VARIANT=release
+    VARIANT=debug
 fi
 
 echo "Using BOB=${BOB}"
